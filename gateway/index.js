@@ -1,109 +1,43 @@
-const express = require("express");
-const cors = require("cors");
-const jwt = require("jsonwebtoken");
-const { createProxyMiddleware } = require("http-proxy-middleware");
-const rateLimit = require("express-rate-limit");
+const express = require('express');
+const axios = require('axios');
+const cors = require('cors');
 
 const app = express();
-const PORT = 8000;
-const JWT_SECRET = "rahasia_uts";
+const PORT = 3000;
 
 app.use(cors());
+app.use(express.json());
 
-const limiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 60,
-  message: {
-    message: "Terlalu banyak request, coba lagi nanti"
-  }
+// ROUTE UNTUK EMPLOYEE SERVICE (LARAVEL - PORT 8000)
+app.get('/employees', async (req, res) => {
+    try {
+        const response = await axios.get('http://localhost:8000/api/employees');
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ message: "Error connecting to Employee Service", error: error.message });
+    }
 });
 
-app.use(limiter);
-
-function verifyToken(req, res, next) {
-  const publicPaths = [
-  "/api/auth/login",
-  "/api/auth/register",
-  "/api/auth/refresh",
-  "/api/auth/logout",
-  "/api/auth/google",
-  "/api/auth/google/callback"
-];
-
-  if (publicPaths.includes(req.path)) {
-    return next();
-  }
-
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader) {
-    return res.status(401).json({ message: "Token tidak ditemukan" });
-  }
-
-  const token = authHeader.split(" ")[1];
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.headers["x-user-id"] = decoded.id;
-    req.headers["x-user-role"] = decoded.role;
-    next();
-  } catch (error) {
-    return res.status(401).json({ message: "Token tidak valid" });
-  }
-}
-
-app.use(verifyToken);
-
-app.use(
-  "/api/auth",
-  createProxyMiddleware({
-    target: "http://localhost:3001",
-    changeOrigin: true,
-    pathRewrite: {
-      "^/api/auth": ""
+// ROUTE UNTUK ATTENDANCE SERVICE (NODEJS - PORT 5002)
+app.get('/attendance', async (req, res) => {
+    try {
+        const response = await axios.get('http://localhost:5002/attendance');
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ message: "Error connecting to Attendance Service", error: error.message });
     }
-  })
-);
+});
 
-app.use(
-  "/api/employees",
-  createProxyMiddleware({
-    target: "http://localhost:8080",
-    changeOrigin: true,
-    pathRewrite: {
-      "^/api/employees": "/employees"
+// ROUTE UNTUK AUTH SERVICE (NODEJS - PORT 5001)
+app.post('/login', async (req, res) => {
+    try {
+        const response = await axios.post('http://localhost:5001/login', req.body);
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ message: "Error connecting to Auth Service", error: error.message });
     }
-  })
-);
-
-app.use(
-  "/api/attendance",
-  createProxyMiddleware({
-    target: "http://localhost:3003",
-    changeOrigin: true,
-    pathRewrite: {
-      "^/api/attendance": "/attendance"
-    }
-  })
-);
-
-app.use(
-  "/api/leaves",
-  createProxyMiddleware({
-    target: "http://localhost:3003",
-    changeOrigin: true,
-    pathRewrite: {
-      "^/api/leaves": "/leaves"
-    }
-  })
-);
-
-app.get("/", (req, res) => {
-  res.json({
-    message: "API Gateway Sistem Kepegawaian & Absensi berjalan"
-  });
 });
 
 app.listen(PORT, () => {
-  console.log(`Gateway running on port ${PORT}`);
+    console.log(`Gateway running on http://localhost:${PORT}`);
 });
