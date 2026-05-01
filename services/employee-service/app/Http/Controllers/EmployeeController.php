@@ -7,43 +7,84 @@ use Illuminate\Http\Request;
 
 class EmployeeController extends Controller
 {
-    /**
-     * Menampilkan semua data karyawan
-     * Endpoint: GET /api/employees
-     */
-    public function index()
-    {
-        $employees = Employee::all();
-        
-        return response()->json([
-            'status' => 'success',
-            'data' => $employees
-        ], 200);
+    // GET: List semua karyawan
+    public function index() {
+        return response()->json(Employee::all(), 200);
     }
 
-    /**
-     * Menghapus data karyawan berdasarkan ID
-     * Endpoint: DELETE /api/employees/{id}
-     */
-    public function destroy($id)
-    {
-        // Cari data karyawan berdasarkan ID
+    // POST: Tambah karyawan baru
+    public function store(Request $request) {
+        $employee = Employee::create($request->all());
+        return response()->json(['message' => 'Created', 'data' => $employee], 201);
+    }
+
+    // GET {id}: Lihat satu karyawan
+    public function show($id) {
         $employee = Employee::find($id);
-
-        // Jika data tidak ditemukan
-        if (!$employee) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Data karyawan tidak ditemukan'
-            ], 404);
-        }
-
-        // Hapus data dari database
-        $employee->delete();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Data karyawan dengan ID ' . $id . ' berhasil dihapus'
-        ], 200);
+        return $employee ? response()->json($employee) : response()->json(['message' => 'Not Found'], 404);
     }
-}
+
+    // PUT {id}: Update data karyawan
+    public function update(Request $request, $id) {
+        $employee = Employee::find($id);
+        if ($employee) {
+            $employee->update($request->all());
+            return response()->json(['message' => 'Updated', 'data' => $employee]);
+        }
+        return response()->json(['message' => 'Not Found'], 404);
+    }
+
+    // DELETE {id}: Hapus karyawan
+    public function destroy($id) {
+        $employee = Employee::find($id);
+        if ($employee) {
+            $employee->delete();
+            return response()->json(['message' => 'Deleted Successfully']);
+        }
+        return response()->json(['message' => 'Not Found'], 404);
+    }
+}// GET ALL
+app.get('/api/employees', async (req, res) => {
+    const response = await axios.get(`${EMPLOYEE_SERVICE_URL}/api/employees`);
+    res.status(response.status).json(response.data);
+});
+
+// POST NEW
+app.post('/api/employees', async (req, res) => {
+    const response = await axios.post(`${EMPLOYEE_SERVICE_URL}/api/employees`, req.body);
+    res.status(response.status).json(response.data);
+});
+
+// UPDATE (PUT)
+app.put('/api/employees/:id', async (req, res) => {
+    const response = await axios.put(`${EMPLOYEE_SERVICE_URL}/api/employees/${req.params.id}`, req.body);
+    res.status(response.status).json(response.data);
+});
+
+// DELETE
+app.delete('/api/employees/:id', async (req, res) => {
+    const response = await axios.delete(`${EMPLOYEE_SERVICE_URL}/api/employees/${req.params.id}`);
+    res.status(response.status).json(response.data);
+});// GET ALL
+app.get('/api/employees', async (req, res) => {
+    const response = await axios.get(`${EMPLOYEE_SERVICE_URL}/api/employees`);
+    res.status(response.status).json(response.data);
+});
+
+// POST NEW
+app.post('/api/employees', async (req, res) => {
+    const response = await axios.post(`${EMPLOYEE_SERVICE_URL}/api/employees`, req.body);
+    res.status(response.status).json(response.data);
+});
+
+// UPDATE (PUT)
+app.put('/api/employees/:id', async (req, res) => {
+    const response = await axios.put(`${EMPLOYEE_SERVICE_URL}/api/employees/${req.params.id}`, req.body);
+    res.status(response.status).json(response.data);
+});
+
+// DELETE
+app.delete('/api/employees/:id', async (req, res) => {
+    const response = await axios.delete(`${EMPLOYEE_SERVICE_URL}/api/employees/${req.params.id}`);
+    res.status(response.status).json(response.data);
+});
