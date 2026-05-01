@@ -4,34 +4,44 @@ const cors = require('cors');
 
 const app = express();
 app.use(cors());
-app.use(express.json()); // Penting agar Gateway bisa membaca body JSON dari Postman
+app.use(express.json());
 
 const PORT = 3000;
 
-// --- ROUTE ABSENSI & CUTI ---
-app.post('/attendance', async (req, res) => {
-    try {
-        // Meneruskan data (employee_id, status, tanggal) ke Attendance Service (Port 5002)
-        const response = await axios.post('http://localhost:5002/attendance', req.body);
-        res.json(response.data);
-    } catch (error) {
-        res.status(error.response?.status || 500).json(
-            error.response?.data || { message: "Attendance Service sedang tidak aktif" }
-        );
-    }
-});
+// --- ROUTE ABSENSI ---
 
-// --- ROUTE AMBIL DATA (Untuk Cek di Postman) ---
+// 1. Ambil Semua Data (GET)
 app.get('/attendance', async (req, res) => {
     try {
         const response = await axios.get('http://localhost:5002/attendance');
         res.json(response.data);
     } catch (error) {
-        res.status(500).json({ message: "Gagal mengambil data dari database" });
+        res.status(500).json({ message: "Attendance Service mati" });
     }
 });
 
-// --- ROUTE EMPLOYEE (Laravel) ---
+// 2. Tambah Data Baru (POST)
+app.post('/attendance', async (req, res) => {
+    try {
+        const response = await axios.post('http://localhost:5002/attendance', req.body);
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ message: "Gagal mengirim data ke Attendance Service" });
+    }
+});
+
+// 3. Hapus Data (DELETE)
+app.delete('/attendance/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const response = await axios.delete(`http://localhost:5002/attendance/${id}`);
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ message: "Gagal menghapus data" });
+    }
+});
+
+// --- ROUTE EMPLOYEE (LARAVEL) ---
 app.get('/employees', async (req, res) => {
     try {
         const response = await axios.get('http://localhost:8000/api/employees');
