@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # API Gateway (Node.js)
+  gateway:
+    build: ./gateway
+    ports:
+      - "8080:80"
+    networks:
+      - upn-network
+    depends_on:
+      - auth-service
+      - employee-service
+
+  # Auth Service (PHP/Laravel - NIM Ganjil)
+  auth-service:
+    build: ./services/auth-service
+    networks:
+      - upn-network
+    # Tambahkan env jika diperlukan untuk OAuth GitHub
+    environment:
+      - GITHUB_CLIENT_ID=your_id
+      - GITHUB_CLIENT_SECRET=your_secret
+
+  # Employee Service (Laravel - Database db_attendance)
+  employee-service:
+    build: ./services/employee-service
+    networks:
+      - upn-network
+    environment:
+      - DB_HOST=127.0.0.1
+      - DB_DATABASE=db_attendance
+      - DB_USERNAME=root
+      - DB_PASSWORD=
+
+networks:
+  upn-network:
+    driver: bridge
